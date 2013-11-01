@@ -1,3 +1,30 @@
+#define high_resolution_timer
+#ifdef high_resolution_timer
+#include <windows.h>
+#include <stdio.h>
+double PCFreq = 0.0;
+__int64 CounterStart = 0;
+
+void StartCounter()
+{
+	LARGE_INTEGER li;
+	if(!QueryPerformanceFrequency(&li))
+		printf("QueryPerformanceFrequency failed!\n");
+
+	PCFreq = double(li.QuadPart)/1000.0;
+
+	QueryPerformanceCounter(&li);
+	CounterStart = li.QuadPart;
+}
+double GetCounter()
+{
+	LARGE_INTEGER li;
+	QueryPerformanceCounter(&li);
+	return double(li.QuadPart-CounterStart)/PCFreq;
+}
+
+#endif
+
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
@@ -14,7 +41,7 @@
 
 #include <time.h>
 
-//#define OPENGL
+#define OPENGL
 #ifdef OPENGL
 #include <GL/freeglut.h>
 #endif
@@ -130,29 +157,135 @@ namespace warping{
 		return point_mapped(p1, p2, p3, q1, q2, q3, q);
 	}
 
-	void scan_triangle(/*src*/cv::Point& p1, cv::Point& p2, cv::Point& p3, cv::Mat& srcImage, cv::Point& q1, cv::Point& q2, cv::Point& q3, cv::Mat& tgtImage/*tgt*/)
-	{
-		//y值随着下标的增加而增加
-		cv::Point p[3], q[3];
-		bool xflag = true;//true +; false -
-		if(p1.y < p2.y)
-		{
-			if(p2.y < p3.y)
-			{
-				p[0] = p1;
-				p[1] = p2;
-				p[2] = p3;
-			}
-			else 
-			{
-				if(p1.y < p3.y)
-				{
-					//sort
-				}
-			}
-		}
-	}
-	//cv::Point GetMappedPoint()
+	//void scan_triangle(/*src*/cv::Point& p1, cv::Point& p2, cv::Point& p3, cv::Mat& srcImage, cv::Point& q1, cv::Point& q2, cv::Point& q3, cv::Mat& tgtImage/*tgt*/)
+	//{
+	//	//y值随着下标的增加而增加
+	//	cv::Point p[3], q[3];
+	//	int index[3] = {0,1,2};//y increasing
+	//	p[0] = p1;
+	//	p[1] = p2;
+	//	p[2] = p3;
+	//	q[0] = q1;
+	//	q[1] = q2;
+	//	q[2] = q3;
+	//	bool xflag = true;//true +; false -
+	//	bool yflag = true;//true down; false up
+	//	bool gradient = true;//false vertical
+	//	/*扫描方法，找到最高点，确定是正扫描还是反扫面，一行一行的扫，直到碰到最后一个点
+	//	 *
+	//	 */
+	//	if(p1.y < p2.y)//sort by y
+	//	{
+	//		if(p2.y < p3.y)
+	//		{
+	//			index[0] = 2;
+	//			index[1] = 1;
+	//			index[2] = 0;
+	//			if(p2.x > p1.x)
+	//				xflag = false;//1
+	//			//2
+	//		}
+	//		else if(p2.y == p3.y)
+	//		{
+	//			if(p2.x < p3.x)
+	//			{
+	//				index[0] = 1;
+	//				index[1] = 2;
+	//				index[2] = 0;//3 
+	//			}
+	//			else
+	//			{
+	//				index[0] = 2;
+	//				index[1] = 1;
+	//				index[2] = 0; 
+	//				xflag = false;//4
+	//			}
+	//		}
+	//		else
+	//		{
+	//			if(p1.y < p3.y)
+	//			{
+	//				index[0] = 1;
+	//				index[1] = 2;
+	//				index[2] = 0; //5
+	//				if(p1.x > p3.x)
+	//					xflag = false;//6
+	//			}
+	//			else
+	//			{
+	//				index[0] = 1;
+	//				index[1] = 0;
+	//				index[2] = 2;
+	//				if(p3.x > p1.x)
+	//					xflag = false;//7
+	//				//8
+	//			}
+	//		}
+	//	}
+	//	else if(p1.y == p2.y)
+	//	{
+	//		if(p1.y < p3.y)
+	//		{
+	//			if(p1.x < p2.x)
+	//			{
+	//				index[0] = 2;
+	//				index[1] = 0;
+	//				index[2] = 1;//9
+	//			}
+	//			else
+	//			{
+	//				index[0] = 2;
+	//				index[1] = 1;
+	//				index[2] = 0;//10
+	//			}
+	//		}
+	//		else
+	//		{
+	//			if(p1.x < p2.x)
+	//			{
+	//				index[0] = 0;
+	//				index[1] = 1;
+	//				index[2] = 2;//11
+	//			}
+	//			else
+	//			{
+	//				index[0] = 1;
+	//				index[1] = 0;
+	//				index[2] = 2;//12
+	//			}
+	//		}
+	//	}
+	//	else
+	//	{
+	//		if(p2.y > p3.y)
+	//		{
+	//			index[0] = 1;
+	//			index[1] = 0;
+	//			index[2] = 2;//12
+	//		}
+	//	}
+
+	//	if(p[index[0]].y == p[index[1]].y)///set flag
+	//	{
+	//		yflag = false;
+	//		if(p[index[0]].x == p[index[2]].x && p[index[0]].x < p[index[1]].x)
+	//		{
+	//			xflag = false;
+	//		}
+	//		else if(p[index[1]].x == p[index[2]].x && p[index[1]].x < p[index[0]].x)
+	//		{
+	//			xflag = false;
+	//		}
+	//	}
+	//	else
+	//	{
+	//		if(p[index[1]].y == p[index[2]].y)
+	//		{
+	//			if(p[index[1]].x < )
+	//		}
+	//	}
+	//}
+	//
 
 };
 
@@ -696,26 +829,57 @@ void move_point(int& minx, int& maxx, int& miny, int& maxy)
 #ifdef OPENGL
 GLuint texName;
 GLubyte *texImage;
+GLubyte *newImage;
 const int tgtIndex = 3;
 
 void makeTexImage()
 {
+	uchar* data = gImage[2].data;
 	texImage = new GLubyte[gWidth*gHeight*4];
 	for(int i = 0; i < gHeight; i++)
 	{
 		for(int j = 0; j < gWidth; j++)
 		{
-			Vec3b& v = gImage[2].at<Vec3b>(i, j);
-			texImage[(i*gWidth+j)*4] = v.val[2];
-			texImage[(i*gWidth+j)*4+1] = v.val[1];
-			texImage[(i*gWidth+j)*4+2] = v.val[0];
+			//Vec3b& v = gImage[2].at<Vec3b>(i, j);
+			texImage[(i*gWidth+j)*4+2] = *(data++);//v.val[2];
+			texImage[(i*gWidth+j)*4+1] = *(data++);//v.val[1];
+			texImage[(i*gWidth+j)*4] = *(data++);//v.val[0];
 			texImage[(i*gWidth+j)*4+3] = 255;
 		}
 	}
 }
 
+void readPixel()
+{
+	clock_t start = clock();
+	clock_t begin = start;
+	newImage = new GLubyte[gWidth*gHeight*4];
+	//memset(newImage, 0, sizeof(GLubyte)*gWidth*gHeight*4);
+	printf("***************\ntime new = %lf\n", (double)(clock()-start)/CLOCKS_PER_SEC);
+	start = clock();
+	printf("rrrrrrrr\n");
+	StartCounter();
+	glReadPixels(0, 0, gWidth, gHeight, GL_RGBA, GL_UNSIGNED_BYTE, newImage);
+	printf("%lf\n", GetCounter());
+	printf("time read = %lf\n", (double)(clock()-start)/CLOCKS_PER_SEC);
+	start = clock();
+	uchar* data = gImage[3].data;
+	for(int i = 0; i < gHeight; i++)
+	{
+		for(int j = 0; j < gWidth; j++)
+		{
+			*(data++) = newImage[(i*gWidth+j)*4+2];
+			*(data++) = newImage[(i*gWidth+j)*4+1];
+			*(data++) = newImage[(i*gWidth+j)*4];
+		}
+	}
+	printf("time convert = %lf\n", (double)(clock()-start)/CLOCKS_PER_SEC);
+	printf("time total = %lf\n\n", (double)(clock()-begin)/CLOCKS_PER_SEC);
+}
+
 void init(void)
 {    
+	clock_t start = clock();
 	glClearColor (0.0, 0.0, 0.0, 0.0);
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_DEPTH_TEST);
@@ -732,10 +896,12 @@ void init(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gWidth, gHeight, 
 		0, GL_RGBA, GL_UNSIGNED_BYTE, texImage);
+	printf("time1 = %lf\n", (double)(clock()-start)/CLOCKS_PER_SEC);
 
 }
 void display()
 {
+	clock_t start = clock();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_TEXTURE_2D);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
@@ -749,19 +915,26 @@ void display()
 		cv::Point& p1 = g_point_list[tgtIndex][face_list[i].x];
 		cv::Point& p2 = g_point_list[tgtIndex][face_list[i].y];
 		cv::Point& p3 = g_point_list[tgtIndex][face_list[i].z];
-		glTexCoord2f(p1.x*ratiox, p1.y*ratioy);glVertex2f(p1.x, gHeight-p1.y);
+		/*glTexCoord2f(p1.x*ratiox, p1.y*ratioy);glVertex2f(p1.x, gHeight-p1.y);
 		glTexCoord2f(p2.x*ratiox, p2.y*ratioy);glVertex2f(p2.x, gHeight-p2.y);
-		glTexCoord2f(p3.x*ratiox, p3.y*ratioy);glVertex2f(p3.x, gHeight-p3.y);
+		glTexCoord2f(p3.x*ratiox, p3.y*ratioy);glVertex2f(p3.x, gHeight-p3.y);*/
+		glTexCoord2f(p1.x*ratiox, p1.y*ratioy);glVertex2f(p1.x, p1.y);
+		glTexCoord2f(p2.x*ratiox, p2.y*ratioy);glVertex2f(p2.x, p2.y);
+		glTexCoord2f(p3.x*ratiox, p3.y*ratioy);glVertex2f(p3.x, p3.y);
 	}
 	glEnd();
 	//glFlush();
-
 	glDisable(GL_TEXTURE_2D);
+	//printf("time2 = %lf\n", (double)(clock()-start)/CLOCKS_PER_SEC);
 
-	imshow(gWindowName[0], gImage[0]);
-	imshow(gWindowName[1], gImage[1]);
-	imshow(gWindowName[2], gImage[2]);
+	readPixel();
+	//imshow(gWindowName[3], gImage[3]);
+	
 
+	//imshow(gWindowName[0], gImage[0]);
+	//imshow(gWindowName[1], gImage[1]);
+	//imshow(gWindowName[2], gImage[2]);
+	
 	//glColor3f(1.0, 0.0, 0.0);
 	//glRectf(-0.5, -0.5, 0.5, 0.5);
 	glutSwapBuffers();
@@ -769,12 +942,14 @@ void display()
 
 void reshape(int w, int h)
 {
-	glViewport(0, 0, (GLsizei) w, (GLsizei) h);
+	//glViewport(0, 0, (GLsizei) w, (GLsizei) h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluOrtho2D(0, gWidth, 0, gHeight);
+	
 	//gluOrtho2D(0, 1, 0, 1);
 	//gluPerspective(60.0, (GLfloat) w/(GLfloat) h, 1.0, 30.0);
+	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	//glTranslatef(0.0, 0.0, -3.6);
@@ -810,6 +985,9 @@ int main( int argc, char** argv)
 	gSubdiv[1] = Subdiv2D(gRect);
 	gSubdiv[2] = Subdiv2D(gRect);
 
+	printf("width = %d, height = %d\n", gWidth, gHeight);
+	printf("%d\n", gImage[3].step1());
+
 #ifdef OPENGL
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
@@ -825,6 +1003,9 @@ int main( int argc, char** argv)
 	init();
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
+	for(int i = 0; i < 20; i++)
+		display();
+	printf("qqqq\n");
 	//glutKeyboardFunc(keyboard);
 	glutMainLoop();
 #else
